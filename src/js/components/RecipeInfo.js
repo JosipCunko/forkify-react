@@ -11,31 +11,28 @@ import {
   faBookmark,
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import { mainColor } from "../config.js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { Fraction } from "fractional";
 import { useGlobalFood } from "../FoodContext.js";
+
+import { mainColor } from "../config.js";
 
 function RecipeInfo() {
   const { searchResults, recipeInfo, dispatch } = useGlobalFood();
 
   return (
     <div className="recipe">
-      {searchResults.length === 0 ||
-        (recipeInfo.length === 0 && (
-          <div className="message">
-            <div>
-              <FontAwesomeIcon
-                icon={faFaceSmile}
-                style={{ color: mainColor }}
-              />
-            </div>
-            <p>Start by searching for a recipe or an ingredient. Have fun!</p>
+      {searchResults.length === 0 && (
+        <div className="message">
+          <div>
+            <FontAwesomeIcon icon={faFaceSmile} style={{ color: mainColor }} />
           </div>
-        ))}
+          <p>Start by searching for a recipe or an ingredient. Have fun!</p>
+        </div>
+      )}
 
-      {recipeInfo.length !== 0 && (
+      {recipeInfo.length > 0 && (
         <>
           <figure className="recipe__fig">
             <img

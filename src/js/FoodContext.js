@@ -1,40 +1,21 @@
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
+import { API_KEY, API_URL } from "./config";
+
+import { AJAX } from "./helpers";
 
 const FoodContext = createContext();
 
 const initialState = {
   searchQuery: "",
   searchResults: [],
-  recipeInfo: {
-    id: "664c8f193e7aa067e94e894b",
-    title: "Kiwi Sorbet",
-    publisher: "Epicurious",
-    sourceUrl:
-      "http://www.epicurious.com/recipes/food/views/Kiwi-Sorbet-354134",
-    image: "http://forkify-api.herokuapp.com/images/3541342a79.jpg",
-    servings: 4,
-    cookingTime: 15,
-    ingredients: [
-      {
-        quantity: 2,
-        unit: "pounds",
-        description: "tender ripe green kiwifruit",
-      },
-      {
-        quantity: 0.75,
-        unit: "cup",
-        description: "superfine granulated sugar",
-      },
-      {
-        quantity: null,
-        unit: "",
-        description: "Equipment: an ice cream maker",
-      },
-    ],
-    bookmarked: false,
-  },
+  selectedRecipeId: "",
+  recipeInfo: {},
   bookmarks: [],
-  myRecipes: [],
+  userRecipes: [],
+  addRecipeWindow: {
+    visibility: false,
+    data: {},
+  },
 };
 
 function reducer(state, action) {
@@ -70,17 +51,84 @@ function reducer(state, action) {
           servings: newServings,
         },
       };
+    case "addRecipe/visibilityToggle":
+      return {
+        ...state,
+        addRecipeWindow: {
+          ...state.addRecipeWindow,
+          visibility: !state.addRecipeWindow.visibility,
+        },
+      };
+    case "searchResults/set":
+      return { ...state, searchResults: action.payload };
+
+    case "recipeInfo/select":
+      return { ...state, selectedRecipeId: action.payload };
+    case "recipeInfo/set":
+      return { ...state, recipeInfo: action.payload };
 
     default:
-      throw new Error("Error");
+      throw new Error("Invalid type or payload in dispatch function call");
   }
 }
 
 function FoodProvider({ children }) {
   const [
-    { searchQuery, searchResults, recipeInfo, myRecipes, bookmarks },
+    {
+      searchQuery,
+      searchResults,
+      recipeInfo,
+      userRecipes,
+      bookmarks,
+      addRecipeWindow,
+      selectedRecipeId,
+    },
     dispatch,
   ] = useReducer(reducer, initialState);
+
+  useEffect(
+    function () {
+      async function getFoodBySearch() {
+        try {
+          const data = await AJAX(
+            `${API_URL}?search=${searchQuery}&key=${API_KEY}`
+          );
+
+          return data.data.recipes;
+        } catch (error) {
+          console.error("Errrrror 💥💥💥 ");
+        }
+      }
+      if (searchQuery)
+        getFoodBySearch().then((foodData) =>
+          dispatch({
+            type: "searchResults/set",
+            payload: foodData,
+          })
+        );
+    },
+    [searchQuery]
+  );
+
+  useEffect(
+    function () {
+      async function getFoodById(id) {
+        try {
+          const data = await AJAX(`${API_URL}${id}&key=${API_KEY}`);
+          console.log(data);
+          return data;
+        } catch (error) {
+          console.error("Errrrror 💥💥💥 ");
+        }
+      }
+
+      if (selectedRecipeId.length > 0)
+        getFoodById(selectedRecipeId).then((foodInfo) =>
+          dispatch({ type: "recipeInfo/set", payload: foodInfo })
+        );
+    },
+    [selectedRecipeId]
+  );
 
   return (
     <FoodContext.Provider
@@ -88,9 +136,11 @@ function FoodProvider({ children }) {
         searchQuery,
         searchResults,
         recipeInfo,
-        myRecipes,
+        userRecipes,
         bookmarks,
         dispatch,
+        addRecipeWindow,
+        selectedRecipeId,
       }}
     >
       {children}

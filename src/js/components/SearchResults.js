@@ -5,19 +5,26 @@ import { faUserCircle } from "@fortawesome/free-regular-svg-icons";
 import { mainColor } from "../config.js";
 
 function SearchResults() {
-  const { searchResults } = useGlobalFood();
-  const id = window.location.hash.slice(1);
+  const { searchResults, selectedRecipeId, dispatch } = useGlobalFood();
 
   return (
     <div className="search-results">
       <ul className="results">
         {searchResults.map((searchResult) => (
           <li className="preview" key={crypto.randomUUID()}>
-            <a
+            <div
               className={`preview__link ${
-                searchResult.id === id ? "preview__link--active" : ""
+                searchResult.id === selectedRecipeId
+                  ? "preview__link--active"
+                  : ""
               }`}
-              href={searchResult.id}
+              onClick={() =>
+                dispatch({
+                  type: "recipeInfo/select",
+                  payload: searchResult.id,
+                })
+              }
+              href={`#${searchResult.id}`}
             >
               <figure className="preview__fig">
                 <img src={searchResult.image_url} alt={searchResult.title} />
@@ -38,7 +45,7 @@ function SearchResults() {
                   />
                 </div>
               </div>
-            </a>
+            </div>
           </li>
         ))}
       </ul>

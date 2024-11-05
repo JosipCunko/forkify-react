@@ -4,6 +4,7 @@ import { faBookmark, faFile } from "@fortawesome/free-regular-svg-icons";
 import { mainColor } from "../config.js";
 import { useGlobalFood } from "../FoodContext.js";
 import { useState } from "react";
+import Bookmarks from "./Bookmarks.js";
 
 function Header() {
   const { dispatch } = useGlobalFood();
@@ -59,8 +60,10 @@ function Header() {
                 style={{ color: mainColor }}
               />
 
-              <span>Bookmakrs</span>
+              <span>Bookmarks</span>
             </button>
+
+            <Bookmarks />
           </li>
         </ul>
       </nav>

@@ -8,14 +8,15 @@ const FoodContext = createContext();
 const initialState = {
   searchQuery: "",
   searchResults: [],
+  recipeInfo: "",
   selectedRecipeId: "",
-  recipeInfo: {},
-  bookmarks: [],
   userRecipes: [],
+  isLoading: false,
   addRecipeWindow: {
     visibility: false,
     data: {},
   },
+  bookmarks: [],
 };
 
 function reducer(state, action) {
@@ -23,13 +24,20 @@ function reducer(state, action) {
     case "search":
       return { ...state, searchQuery: action.payload };
     case "recipeInfo/bookmarkChange":
-      return {
-        ...state,
-        recipeInfo: {
-          ...state.recipeInfo,
-          bookmarked: !state.recipeInfo.bookmarked,
-        },
-      };
+      if (state.bookmarks.some((bm) => bm.id === state.selectedRecipeId))
+        return {
+          ...state,
+          bookmarks: state.bookmarks.filter(
+            (bm) => bm.id !== state.selectedRecipeId
+          ),
+        };
+      else {
+        return {
+          ...state,
+          bookmarks: [...state.bookmarks, state.recipeInfo],
+        };
+      }
+
     case "recipeInfo/updateServings":
       const currentServings = state.recipeInfo.servings;
       const newServings = currentServings + action.payload;
@@ -51,6 +59,14 @@ function reducer(state, action) {
           servings: newServings,
         },
       };
+    case "searchResults/set":
+      return { ...state, searchResults: action.payload, isLoading: false };
+    case "recipeInfo/select":
+      return { ...state, selectedRecipeId: action.payload };
+    case "recipeInfo/set":
+      return { ...state, recipeInfo: action.payload, isLoading: false };
+    case "loading":
+      return { ...state, isLoading: true };
     case "addRecipe/visibilityToggle":
       return {
         ...state,
@@ -59,13 +75,6 @@ function reducer(state, action) {
           visibility: !state.addRecipeWindow.visibility,
         },
       };
-    case "searchResults/set":
-      return { ...state, searchResults: action.payload };
-
-    case "recipeInfo/select":
-      return { ...state, selectedRecipeId: action.payload };
-    case "recipeInfo/set":
-      return { ...state, recipeInfo: action.payload };
 
     default:
       throw new Error("Invalid type or payload in dispatch function call");
@@ -78,10 +87,11 @@ function FoodProvider({ children }) {
       searchQuery,
       searchResults,
       recipeInfo,
+      selectedRecipeId,
+      isLoading,
       userRecipes,
       bookmarks,
       addRecipeWindow,
-      selectedRecipeId,
     },
     dispatch,
   ] = useReducer(reducer, initialState);
@@ -90,6 +100,7 @@ function FoodProvider({ children }) {
     function () {
       async function getFoodBySearch() {
         try {
+          dispatch({ type: "loading" });
           const data = await AJAX(
             `${API_URL}?search=${searchQuery}&key=${API_KEY}`
           );
@@ -114,8 +125,8 @@ function FoodProvider({ children }) {
     function () {
       async function getFoodById(id) {
         try {
-          const data = await AJAX(`${API_URL}${id}&key=${API_KEY}`);
-          console.log(data);
+          dispatch({ type: "loading" });
+          const data = await AJAX(`${API_URL}/${id}?key=${API_KEY}`);
           return data;
         } catch (error) {
           console.error("Errrrror 💥💥💥 ");
@@ -123,9 +134,9 @@ function FoodProvider({ children }) {
       }
 
       if (selectedRecipeId.length > 0)
-        getFoodById(selectedRecipeId).then((foodInfo) =>
-          dispatch({ type: "recipeInfo/set", payload: foodInfo })
-        );
+        getFoodById(selectedRecipeId).then((foodInfo) => {
+          dispatch({ type: "recipeInfo/set", payload: foodInfo.data.recipe });
+        });
     },
     [selectedRecipeId]
   );
@@ -141,6 +152,7 @@ function FoodProvider({ children }) {
         dispatch,
         addRecipeWindow,
         selectedRecipeId,
+        isLoading,
       }}
     >
       {children}

@@ -3,9 +3,13 @@ import { useGlobalFood } from "../FoodContext.js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle } from "@fortawesome/free-regular-svg-icons";
 import { mainColor } from "../config.js";
+import Loader from "./Loader.js";
 
 function SearchResults() {
-  const { searchResults, selectedRecipeId, dispatch } = useGlobalFood();
+  const { searchResults, selectedRecipeId, dispatch, isLoading } =
+    useGlobalFood();
+
+  if (isLoading) return <Loader />;
 
   return (
     <div className="search-results">
@@ -24,7 +28,7 @@ function SearchResults() {
                   payload: searchResult.id,
                 })
               }
-              href={`#${searchResult.id}`}
+              // href={`#${searchResult.id}`}
             >
               <figure className="preview__fig">
                 <img src={searchResult.image_url} alt={searchResult.title} />

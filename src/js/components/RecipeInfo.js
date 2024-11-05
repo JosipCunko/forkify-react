@@ -17,9 +17,17 @@ import { Fraction } from "fractional";
 import { useGlobalFood } from "../FoodContext.js";
 
 import { mainColor } from "../config.js";
+import Loader from "./Loader.js";
 
 function RecipeInfo() {
-  const { searchResults, recipeInfo, dispatch } = useGlobalFood();
+  const {
+    searchResults,
+    recipeInfo,
+    dispatch,
+    isLoading,
+    bookmarks,
+    selectedRecipeId,
+  } = useGlobalFood();
 
   return (
     <div className="recipe">
@@ -32,11 +40,13 @@ function RecipeInfo() {
         </div>
       )}
 
-      {recipeInfo.length > 0 && (
+      {isLoading && <Loader />}
+
+      {recipeInfo.length !== 0 && (
         <>
           <figure className="recipe__fig">
             <img
-              src={recipeInfo.image}
+              src={recipeInfo.image_url}
               alt={recipeInfo.title}
               className="recipe__img"
             />
@@ -53,7 +63,7 @@ function RecipeInfo() {
                 className="recipe__info-icon"
               />
               <span className="recipe__info-data recipe__info-data--minutes">
-                {recipeInfo.cookingTime}
+                {recipeInfo.cooking_time}
               </span>
               <span className="recipe__info-text">minutes</span>
             </div>
@@ -117,7 +127,9 @@ function RecipeInfo() {
               <FontAwesomeIcon icon={faBookmark} style={{ color: "#FFF" }} />
               <div
                 className={`bookmarkCrossed ${
-                  recipeInfo.bookmarked ? "bookmarkCrossed--active" : ""
+                  bookmarks.some((bm) => bm.id === selectedRecipeId)
+                    ? ""
+                    : "bookmarkCrossed--active"
                 }`}
               ></div>
             </button>
@@ -153,7 +165,7 @@ function RecipeInfo() {
             </p>
             <a
               className="btn--small recipe__btn"
-              href={recipeInfo.sourceUrl}
+              href={recipeInfo.source_url}
               target="_blank"
               rel="noreferrer"
             >

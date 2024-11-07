@@ -86,14 +86,6 @@
     display: flex;
     align-items: center;
 
-    svg {
-      height: 2.4rem;
-      width: 2.4rem;
-      fill: $color-primary;
-      margin-right: 0.7rem;
-      transform: translateY(-1px);
-    }
-
     &:focus {
       outline: none;
     }
@@ -140,5 +132,94 @@
   .nav__btn--bookmarks:hover + & {
     visibility: visible;
     opacity: 1;
+  }
+}
+
+.navAccount {
+  position: fixed;
+  z-index: 999999;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+
+  &__black {
+    background-color: $color-primary;
+    width: 40%;
+    transition-delay: 0.4s;
+
+    &.nav--visible {
+      transition-delay: 0s;
+    }
+  }
+
+  &__red {
+    background-color: $color-grad-1;
+    width: 95%;
+    transition-delay: 0.2s;
+
+    &.nav--visible {
+      transition-delay: 0.2s;
+    }
+  }
+  &__white {
+    background-color: $color-grad-2;
+    width: 95%;
+    transition-delay: 0s;
+
+    &.nav--visible {
+      transition-delay: 0.4s;
+    }
+  }
+
+  &--visible {
+    transform: translate(0);
+  }
+
+  &__logo {
+    height: 5rem;
+    margin-top: 1.5rem;
+    margin-left: 1.5rem;
+  }
+  &__open,
+  &__close {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: $color-primary;
+    font-size: 3.6rem;
+  }
+  &__open {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+  }
+  &__close {
+    position: absolute;
+    right: 2rem;
+    top: 2rem;
+    color: $color-grad-2;
+  }
+
+  &__list {
+    padding: 2rem;
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+  }
+
+  &__link:link,
+  &__link:visited {
+    text-transform: uppercase;
+    color: #000;
+    font-size: 1.6rem;
+  }
+  &__link:hover,
+  &__link:active {
+    text-decoration: underline;
+    opacity: 0.9;
   }
 }

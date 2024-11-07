@@ -10,9 +10,10 @@ import RecipeInfo from "./components/RecipeInfo";
 import SearchResults from "./components/SearchResults";
 import AddRecipe from "./components/AddRecipe";
 import { useGlobalFood } from "./FoodContext";
+import Account from "./components/Account";
 
 function App() {
-  const { addRecipeWindow } = useGlobalFood();
+  const { addRecipeWindow, account } = useGlobalFood();
 
   return (
     <>
@@ -20,6 +21,7 @@ function App() {
       <SearchResults />
       <RecipeInfo />
       {addRecipeWindow.visibility && <AddRecipe />}
+      {account.visibility && <Account />}
     </>
   );
 }

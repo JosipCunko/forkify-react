@@ -1,16 +1,22 @@
 import { faPlus, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGlobalFood } from "../FoodContext";
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { mainColor } from "../config";
+
+import Notification from "./Notification";
 
 const initialStateAddRecipe = {
   title: "Title",
-  url: "url",
-  imgUrl: "imgUrl",
-  prepTime: 15,
+  source_url: "url",
+  image_url: "imgUrl",
+  cooking_time: 15,
   servings: 4,
   ings: [""],
+  error: {
+    errorIngs: false,
+    errorFormat: false,
+  },
 };
 
 function reducerAddRecipe(state, action) {
@@ -18,11 +24,11 @@ function reducerAddRecipe(state, action) {
     case "title":
       return { ...state, title: action.payload };
     case "url":
-      return { ...state, url: action.payload };
+      return { ...state, source_url: action.payload };
     case "imgUrl":
-      return { ...state, imgUrl: action.payload };
+      return { ...state, image_url: action.payload };
     case "prepTime":
-      return { ...state, prepTime: action.payload };
+      return { ...state, cooking_time: action.payload };
     case "servings":
       return { ...state, servings: action.payload };
 
@@ -33,12 +39,24 @@ function reducerAddRecipe(state, action) {
       return {
         ...state,
         ings: state.ings.filter((_, i) => i + 1 !== action.payload),
+        error: { ...initialStateAddRecipe.error },
       };
     case "ings/change":
       const updatedIngs = [...state.ings];
       updatedIngs[action.payload.index] = action.payload.value;
 
-      return { ...state, ings: updatedIngs };
+      return {
+        ...state,
+        ings: updatedIngs,
+        error: { ...initialStateAddRecipe.error },
+      };
+
+    case "error/ings":
+      return { ...state, error: { ...state.error, errorIngs: true } };
+    case "error/format":
+      return { ...state, error: { ...state.error, errorFormat: true } };
+    case "error/reset":
+      return { ...state, error: { ...initialStateAddRecipe.error } };
 
     default:
       return state;
@@ -47,18 +65,64 @@ function reducerAddRecipe(state, action) {
 
 function AddRecipe() {
   const { dispatch } = useGlobalFood();
-  const [{ title, url, imgUrl, prepTime, servings, ings }, dispatchAddRecipe] =
-    useReducer(reducerAddRecipe, initialStateAddRecipe);
+  const [
+    { title, source_url, image_url, cooking_time, servings, ings, error },
+    dispatchAddRecipe,
+  ] = useReducer(reducerAddRecipe, initialStateAddRecipe);
+
+  useEffect(
+    function () {
+      if (ings.length > 0) {
+        dispatchAddRecipe({ type: "error/reset" });
+      }
+      if (ings.length === 0) {
+        dispatchAddRecipe({ type: "error/ings" });
+      }
+    },
+    [ings.length]
+  );
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    //THIS IS WHERE I LEFT ON
-    const transformedIngs = ings.map((ing) => {
-      return ing.split(",");
+    if (error.errorIngs) return;
+
+    let wrongFormat = false;
+    ings.forEach((ing) => {
+      if (ing.split(",").length !== 3) {
+        wrongFormat = true;
+        dispatchAddRecipe({ type: "error/format" });
+        return;
+      }
     });
 
-    console.log({ title, url, imgUrl, prepTime, servings, ings });
+    if (wrongFormat) return;
+
+    const transformedIngs = ings.map((ing) => {
+      const [quantity, unit, description] = ing.split(",");
+
+      return {
+        quantity: quantity ? quantity.trim() : null,
+        unit: unit.trim(),
+        description: description.trim(),
+      };
+    });
+
+    dispatch({ type: "addRecipe/visibilityToggle" });
+
+    const myNewRecipe = {
+      id: crypto.randomUUID(),
+      title,
+      source_url,
+      image_url,
+      cooking_time,
+      servings,
+      publisher: "USER",
+      ingredients: transformedIngs,
+    };
+    console.log("Uploaded data: ", myNewRecipe);
+
+    dispatch({ type: "addRecipe/add", payload: myNewRecipe });
   }
 
   return (
@@ -85,7 +149,7 @@ function AddRecipe() {
           />
           <label>URL</label>
           <input
-            value={url}
+            value={source_url}
             required
             onChange={(e) =>
               dispatchAddRecipe({ type: "url", payload: e.target.value })
@@ -96,7 +160,7 @@ function AddRecipe() {
           />
           <label>Image URL</label>
           <input
-            value={imgUrl}
+            value={image_url}
             required
             onChange={(e) =>
               dispatchAddRecipe({ type: "imgUrl", payload: e.target.value })
@@ -107,13 +171,16 @@ function AddRecipe() {
           />
           <label>Prep time</label>
           <input
-            value={prepTime}
+            value={cooking_time}
             required
             onChange={(e) =>
-              dispatchAddRecipe({ type: "prepTime", payload: +e.target.value })
+              dispatchAddRecipe({
+                type: "prepTime",
+                payload: e.target.value,
+              })
             }
             name="cookingTime"
-            type="number"
+            type="text"
             placeholder="15 (mins)"
           />
           <label>Servings</label>
@@ -121,15 +188,33 @@ function AddRecipe() {
             value={servings}
             required
             onChange={(e) =>
-              dispatchAddRecipe({ type: "servings", payload: +e.target.value })
+              dispatchAddRecipe({
+                type: "servings",
+                payload: e.target.value,
+              })
             }
             name="servings"
-            type="number"
+            type="text"
             placeholder="4 (people)"
           />
         </div>
         <div className="upload__column upload__column--2">
           <h3 className="upload__heading">Ingredients</h3>
+          {error.errorIngs && (
+            <Notification
+              type={"error"}
+              text={"At least one ingredient is neccessary."}
+              style={{ gridColumn: "1/ -1", padding: "0 4rem" }}
+            />
+          )}
+          {error.errorFormat && (
+            <Notification
+              type={"error"}
+              text={`Wrong ingredient format. Please use this format: quantity, unit, description`}
+              style={{ gridColumn: "1/ -1", padding: "0 4rem" }}
+            />
+          )}
+
           {ings.map((ing, i) => (
             <>
               <label htmlFor={`ing-${i + 1}`}>Ingredient {i + 1}</label>
@@ -138,7 +223,7 @@ function AddRecipe() {
                 required
                 value={ing}
                 id={`ing-${i + 1}`}
-                placeholder="Format: 'Quantity,Unit,Description'"
+                placeholder="Format: 'quantity, unit, description'"
                 onChange={(e) =>
                   dispatchAddRecipe({
                     type: "ings/change",
@@ -151,7 +236,10 @@ function AddRecipe() {
                 className="upload__btn--remove"
                 onClick={(e) => {
                   e.preventDefault();
-                  dispatchAddRecipe({ type: "ings/remove", payload: i + 1 });
+                  dispatchAddRecipe({
+                    type: "ings/remove",
+                    payload: i + 1,
+                  });
                 }}
               >
                 <FontAwesomeIcon
@@ -185,6 +273,7 @@ function AddRecipe() {
             <span>Add more ingredients</span>
           </button>
         </div>
+
         <button className="btn upload__btn">
           <FontAwesomeIcon
             icon={faUpload}

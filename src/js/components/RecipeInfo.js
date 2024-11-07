@@ -40,7 +40,7 @@ function RecipeInfo() {
         </div>
       )}
 
-      {isLoading && <Loader />}
+      {isLoading.loadingRecipe && <Loader />}
 
       {recipeInfo.length !== 0 && (
         <>

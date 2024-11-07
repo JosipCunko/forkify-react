@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faPerson } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark, faFile } from "@fortawesome/free-regular-svg-icons";
 import { mainColor } from "../config.js";
 import { useGlobalFood } from "../FoodContext.js";
@@ -19,7 +19,13 @@ function Header() {
 
   return (
     <header className="header">
-      <img src="/logo.png" alt="forkify-logo" className="header__logo" />
+      <img
+        src="/logo.png"
+        alt="forkify-logo"
+        className="header__logo"
+        style={{ cursor: "pointer" }}
+        onClick={() => window.location.reload()}
+      />
       <form className="search" onSubmit={handleSubmit}>
         <input
           type="text"
@@ -41,7 +47,7 @@ function Header() {
         <ul className="nav__list">
           <li className="nav__item">
             <button
-              className="nav__btn nav__btn--add-recipe"
+              className="nav__btn"
               onClick={() => dispatch({ type: "addRecipe/visibilityToggle" })}
             >
               <FontAwesomeIcon
@@ -65,6 +71,20 @@ function Header() {
 
             <Bookmarks />
           </li>
+          {/* <li className="nav__item">
+            <button
+              className="nav__btn"
+              onClick={() => dispatch({ type: "account/visibilityToggle" })}
+            >
+              <FontAwesomeIcon
+                icon={faPerson}
+                size="sm"
+                style={{ color: mainColor }}
+              />
+
+              <span>Account</span>
+            </button>
+          </li> */}
         </ul>
       </nav>
     </header>

@@ -9,7 +9,7 @@ function SearchResults() {
   const { searchResults, selectedRecipeId, dispatch, isLoading } =
     useGlobalFood();
 
-  if (isLoading) return <Loader />;
+  if (isLoading.loadingResults) return <Loader />;
 
   return (
     <div className="search-results">

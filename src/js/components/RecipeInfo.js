@@ -31,7 +31,7 @@ function RecipeInfo() {
 
   return (
     <div className="recipe">
-      {searchResults.length === 0 && (
+      {searchResults.length === 0 && !selectedRecipeId && (
         <div className="message">
           <div>
             <FontAwesomeIcon icon={faFaceSmile} style={{ color: mainColor }} />
@@ -117,7 +117,7 @@ function RecipeInfo() {
                 icon={faUser}
                 size="lg"
                 style={{ color: mainColor }}
-                className="recipe__info-icon"
+                className="recipe__info--icon"
               />
             </div>
             <button

@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faPerson } from "@fortawesome/free-solid-svg-icons";
-import { faBookmark, faFile } from "@fortawesome/free-regular-svg-icons";
+import { faBookmark } from "@fortawesome/free-regular-svg-icons";
 import { mainColor } from "../config.js";
 import { useGlobalFood } from "../FoodContext.js";
 import { useState } from "react";
@@ -46,45 +46,30 @@ function Header() {
       <nav className="nav">
         <ul className="nav__list">
           <li className="nav__item">
-            <button
-              className="nav__btn"
-              onClick={() => dispatch({ type: "addRecipe/visibilityToggle" })}
-            >
-              <FontAwesomeIcon
-                icon={faFile}
-                size="sm"
-                style={{ color: mainColor }}
-              />
-              <span>Add recipe</span>
-            </button>
-          </li>
-          <li className="nav__item">
             <button className="nav__btn nav__btn--bookmarks">
               <FontAwesomeIcon
                 icon={faBookmark}
-                size="sm"
-                style={{ color: mainColor }}
+                size="xl"
+                style={{ color: mainColor, marginRight: "0.6rem" }}
               />
-
               <span>Bookmarks</span>
             </button>
 
             <Bookmarks />
           </li>
-          {/* <li className="nav__item">
+          <li className="nav__item">
             <button
               className="nav__btn"
               onClick={() => dispatch({ type: "account/visibilityToggle" })}
             >
               <FontAwesomeIcon
                 icon={faPerson}
-                size="sm"
-                style={{ color: mainColor }}
+                size="xl"
+                style={{ color: mainColor, marginRight: "0.6rem" }}
               />
-
               <span>Account</span>
             </button>
-          </li> */}
+          </li>
         </ul>
       </nav>
     </header>

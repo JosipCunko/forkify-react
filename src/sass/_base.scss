@@ -10,6 +10,22 @@ $color-grey-dark-1: #615551; // Normal text
 $color-grey-dark-2: #918581; // Lighter text
 
 $gradient: linear-gradient(to right bottom, $color-grad-1, $color-grad-2);
+$gradient-nav-1: linear-gradient(
+  to right bottom,
+  lighten($color-grad-1, 15%),
+  lighten($color-grad-2, 15%)
+);
+$gradient-nav-2: linear-gradient(
+  to right bottom,
+  lighten($color-grad-1, 20%),
+  lighten($color-grad-2, 20%)
+);
+$gradient-nav-3: linear-gradient(
+  to bottom,
+  lighten($color-grad-1, 25%),
+  lighten($color-grad-2, 25%)
+);
+$gradient-disabled: linear-gradient(to right bottom, #ddd, #c0c0c0);
 
 $bp-large: 78.15em; // 1250px
 $bp-medium: 61.25em; // 980px
@@ -48,6 +64,7 @@ body {
 }
 
 .container {
+  position: relative;
   max-width: 120rem;
   /* min-height: 117rem; */
   min-height: 100vh;

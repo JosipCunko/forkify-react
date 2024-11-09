@@ -11,9 +11,10 @@ import SearchResults from "./components/SearchResults";
 import AddRecipe from "./components/AddRecipe";
 import { useGlobalFood } from "./FoodContext";
 import Account from "./components/Account";
+import Notification from "./components/Notification";
 
 function App() {
-  const { addRecipeWindow, account } = useGlobalFood();
+  const { account, addRecipeWindow, error } = useGlobalFood();
 
   return (
     <>
@@ -21,7 +22,17 @@ function App() {
       <SearchResults />
       <RecipeInfo />
       {addRecipeWindow.visibility && <AddRecipe />}
-      {account.visibility && <Account />}
+      <Account />
+      {error && (
+        <Notification
+          type={"error"}
+          text={error}
+          classNameAdditional={"errorMain"}
+        />
+      )}
+      {account.usernameInput && (
+        <Notification type={"input"} text={"Your new username: "} />
+      )}
     </>
   );
 }

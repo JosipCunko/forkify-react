@@ -2,16 +2,18 @@ import { faPlus, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGlobalFood } from "../FoodContext";
 import { useEffect, useReducer } from "react";
-import { mainColor } from "../config";
+import { API_KEY, API_URL, mainColor } from "../config";
 
 import Notification from "./Notification";
+import { AJAX, setError } from "../helpers";
 
 const initialStateAddRecipe = {
-  title: "Title",
-  source_url: "url",
-  image_url: "imgUrl",
-  cooking_time: 15,
-  servings: 4,
+  title: "",
+  source_url: "",
+  image_url: "",
+  publisher: "",
+  cooking_time: "",
+  servings: "",
   ings: [""],
   error: {
     errorIngs: false,
@@ -27,6 +29,8 @@ function reducerAddRecipe(state, action) {
       return { ...state, source_url: action.payload };
     case "imgUrl":
       return { ...state, image_url: action.payload };
+    case "publisher":
+      return { ...state, publisher: action.payload };
     case "prepTime":
       return { ...state, cooking_time: action.payload };
     case "servings":
@@ -65,8 +69,18 @@ function reducerAddRecipe(state, action) {
 
 function AddRecipe() {
   const { dispatch } = useGlobalFood();
+
   const [
-    { title, source_url, image_url, cooking_time, servings, ings, error },
+    {
+      title,
+      source_url,
+      image_url,
+      publisher,
+      cooking_time,
+      servings,
+      ings,
+      error,
+    },
     dispatchAddRecipe,
   ] = useReducer(reducerAddRecipe, initialStateAddRecipe);
 
@@ -82,47 +96,51 @@ function AddRecipe() {
     [ings.length]
   );
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(e) {
+    try {
+      e.preventDefault();
 
-    if (error.errorIngs) return;
+      if (error.errorIngs) return;
 
-    let wrongFormat = false;
-    ings.forEach((ing) => {
-      if (ing.split(",").length !== 3) {
-        wrongFormat = true;
-        dispatchAddRecipe({ type: "error/format" });
-        return;
-      }
-    });
+      let wrongFormat = false;
+      ings.forEach((ing) => {
+        if (ing.split(",").length !== 3) {
+          wrongFormat = true;
+          dispatchAddRecipe({ type: "error/format" });
+          return;
+        }
+      });
 
-    if (wrongFormat) return;
+      if (wrongFormat) return;
 
-    const transformedIngs = ings.map((ing) => {
-      const [quantity, unit, description] = ing.split(",");
+      const transformedIngs = ings.map((ing) => {
+        const [quantity, unit, description] = ing.split(",");
 
-      return {
-        quantity: quantity ? quantity.trim() : null,
-        unit: unit.trim(),
-        description: description.trim(),
+        return {
+          quantity: quantity ? quantity.trim() : null,
+          unit: unit.trim(),
+          description: description.trim(),
+        };
+      });
+
+      dispatch({ type: "addRecipe/visibilityToggle" });
+
+      const myNewRecipe = {
+        title,
+        source_url,
+        image_url,
+        cooking_time,
+        servings,
+        publisher,
+        ingredients: transformedIngs,
       };
-    });
 
-    dispatch({ type: "addRecipe/visibilityToggle" });
-
-    const myNewRecipe = {
-      id: crypto.randomUUID(),
-      title,
-      source_url,
-      image_url,
-      cooking_time,
-      servings,
-      publisher: "USER",
-      ingredients: transformedIngs,
-    };
-    console.log("Uploaded data: ", myNewRecipe);
-
-    dispatch({ type: "addRecipe/add", payload: myNewRecipe });
+      const data = await AJAX(`${API_URL}?key=${API_KEY}`, myNewRecipe);
+      dispatch({ type: "addRecipe/add", payload: data });
+      console.log("Uploaded data: ", data);
+    } catch (error) {
+      setError(dispatch, error.message);
+    }
   }
 
   return (
@@ -145,7 +163,7 @@ function AddRecipe() {
             }
             name="title"
             type="text"
-            placeholder="Your foood"
+            placeholder="Food name"
           />
           <label>URL</label>
           <input
@@ -167,7 +185,18 @@ function AddRecipe() {
             }
             name="image"
             type="text"
-            placeholder="https://image-of-food"
+            placeholder="https://img"
+          />
+          <label>Publisher</label>
+          <input
+            value={publisher}
+            required
+            onChange={(e) =>
+              dispatchAddRecipe({ type: "publisher", payload: e.target.value })
+            }
+            name="publisher"
+            type="text"
+            placeholder="John Smith"
           />
           <label>Prep time</label>
           <input
@@ -181,7 +210,7 @@ function AddRecipe() {
             }
             name="cookingTime"
             type="text"
-            placeholder="15 (mins)"
+            placeholder="15 [mins]"
           />
           <label>Servings</label>
           <input
@@ -195,7 +224,7 @@ function AddRecipe() {
             }
             name="servings"
             type="text"
-            placeholder="4 (people)"
+            placeholder="4 [people]"
           />
         </div>
         <div className="upload__column upload__column--2">
@@ -250,17 +279,6 @@ function AddRecipe() {
               </button>
             </>
           ))}
-          {ings.length >= 5 && (
-            <p
-              className="upload__heading"
-              style={{
-                fontSize: "1.4rem",
-                textAlign: "center",
-              }}
-            >
-              Maximum 5 ingredients allowed
-            </p>
-          )}
 
           <button
             className="btn upload__column--btn"
@@ -268,9 +286,20 @@ function AddRecipe() {
               e.preventDefault();
               dispatchAddRecipe({ type: "ings/add" });
             }}
+            disabled={ings.length === 5}
           >
-            <FontAwesomeIcon icon={faPlus} size="sm" style={{ color: "fff" }} />
-            <span>Add more ingredients</span>
+            {ings.length === 5 ? (
+              <span>Max. 5 ingredients allowed</span>
+            ) : (
+              <>
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  size="sm"
+                  style={{ color: "fff" }}
+                />
+                <span>Add more ingredients</span>
+              </>
+            )}
           </button>
         </div>
 

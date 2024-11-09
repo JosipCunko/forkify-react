@@ -29,3 +29,15 @@ export const AJAX = async function (url, uploadData = undefined) {
     throw err;
   }
 };
+
+export function setError(dispatch, errMsg) {
+  dispatch({ type: "error/main", payload: `${errMsg}` });
+
+  setTimeout(function () {
+    dispatch({ type: "error/reset" });
+  }, 4000);
+}
+
+export function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

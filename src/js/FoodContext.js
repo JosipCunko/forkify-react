@@ -1,61 +1,95 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
-import { API_KEY, API_URL } from "./config";
+import { API_URL } from "./config";
 
-import { AJAX } from "./helpers";
+import { AJAX, getRandomNumber, setError } from "./helpers";
 
 const FoodContext = createContext();
 
 const initialState = {
+  account: {
+    visibility: false,
+    username: "Josip",
+    usernameInput: false,
+    profileImg: "https://avatar.iran.liara.run/public/10",
+  },
   searchQuery: "",
   searchResults: [],
+  page: 1,
   recipeInfo: "",
   selectedRecipeId: "",
+  addRecipeWindow: {
+    visibility: false,
+  },
+  bookmarks: [],
   userRecipes: [],
   isLoading: {
     loadingRecipe: false,
     loadingResults: false,
   },
-  addRecipeWindow: {
-    visibility: false,
-  },
-  bookmarks: [],
-  account: {
-    visibility: false,
-  },
+  error: null,
 };
 
 function reducer(state, action) {
   switch (action.type) {
-    case "search":
-      return { ...state, searchQuery: action.payload };
-
     case "account/visibilityToggle":
       return {
         ...state,
-        account: { ...state.account, visibility: !state.account.visibility },
+        account: {
+          ...state.account,
+          usernameInput: false,
+          visibility: !state.account.visibility,
+        },
+      };
+    case "account/avatarChange":
+      return {
+        ...state,
+        account: {
+          ...state.account,
+          profileImg: `https://avatar.iran.liara.run/public/${getRandomNumber(
+            1,
+            100
+          )}`,
+        },
+      };
+    case "account/usernameInput":
+      return { ...state, account: { ...state.account, usernameInput: true } };
+    case "account/usernameChange":
+      return {
+        ...state,
+        account: {
+          ...state.account,
+          usernameInput: false,
+          username: action.payload,
+        },
       };
 
-    case "recipeInfo/bookmarkChange":
-      if (state.bookmarks.some((bm) => bm.id === state.selectedRecipeId))
-        return {
-          ...state,
-          bookmarks: state.bookmarks.filter(
-            (bm) => bm.id !== state.selectedRecipeId
-          ),
-        };
-      else {
-        return {
-          ...state,
-          bookmarks: [...state.bookmarks, state.recipeInfo],
-        };
-      }
+    case "search":
+      return { ...state, searchQuery: action.payload };
+    case "searchResults/set":
+      return {
+        ...state,
+        searchResults: action.payload,
+        isLoading: { ...state.isLoading, loadingResults: false },
+        account: { ...state.account, usernameInput: false, visibility: false },
+      };
 
+    case "page/click":
+      return { ...state, page: state.page + action.payload };
+
+    case "recipeInfo/select":
+      return { ...state, selectedRecipeId: action.payload };
+    case "recipeInfo/set":
+      return {
+        ...state,
+        recipeInfo: action.payload,
+        isLoading: { ...initialState.isLoading },
+        account: { ...state.account, usernameInput: false, visibility: false },
+      };
     case "recipeInfo/updateServings":
       const currentServings = state.recipeInfo.servings;
       const newServings = currentServings + action.payload;
 
       if (newServings < 2 || newServings > 20) return state;
-
       return {
         ...state,
         recipeInfo: {
@@ -71,19 +105,37 @@ function reducer(state, action) {
           servings: newServings,
         },
       };
-    case "searchResults/set":
+    case "recipeInfo/bookmarkChange":
+      if (state.bookmarks.some((bm) => bm.id === state.selectedRecipeId))
+        return {
+          ...state,
+          bookmarks: state.bookmarks.filter(
+            (bm) => bm.id !== state.selectedRecipeId
+          ),
+        };
+      else {
+        return {
+          ...state,
+          bookmarks: [...state.bookmarks, state.recipeInfo],
+        };
+      }
+
+    case "addRecipe/add":
       return {
         ...state,
-        searchResults: action.payload,
-        isLoading: { ...state.isLoading, loadingResults: false },
-      };
-    case "recipeInfo/select":
-      return { ...state, selectedRecipeId: action.payload };
-    case "recipeInfo/set":
-      return {
-        ...state,
-        recipeInfo: action.payload,
+        userRecipes: [...state.userRecipes, action.payload.data.recipe],
+        bookmarks: [...state.bookmarks, action.payload.data.recipe],
         isLoading: { ...initialState.isLoading },
+        selectedRecipeId: action.payload.data.recipe.id,
+      };
+    case "addRecipe/visibilityToggle":
+      return {
+        ...state,
+        addRecipeWindow: {
+          ...state.addRecipeWindow,
+          visibility: !state.addRecipeWindow.visibility,
+        },
+        account: { ...state.account, usernameInput: false, visibility: false },
       };
 
     case "loading/recipe":
@@ -96,41 +148,36 @@ function reducer(state, action) {
         ...state,
         isLoading: { ...state.isLoading, loadingResults: true },
       };
-
-    case "addRecipe/add":
+    case "error/main":
       return {
         ...state,
-        userRecipes: [...state.userRecipes, action.payload],
-        bookmarks: [...state.bookmarks, action.payload],
+        error: action.payload,
         isLoading: { ...initialState.isLoading },
       };
-
-    case "addRecipe/visibilityToggle":
-      return {
-        ...state,
-        addRecipeWindow: {
-          ...state.addRecipeWindow,
-          visibility: !state.addRecipeWindow.visibility,
-        },
-      };
+    case "error/reset":
+      return { ...state, error: null };
 
     default:
-      throw new Error("Invalid type or payload in dispatch function call");
+      throw new Error(
+        "Invalid type/payload in dispatch function call, or smth. else"
+      );
   }
 }
 
 function FoodProvider({ children }) {
   const [
     {
+      account,
       searchQuery,
       searchResults,
+      page,
       recipeInfo,
       selectedRecipeId,
-      isLoading,
+      addRecipeWindow,
       userRecipes,
       bookmarks,
-      addRecipeWindow,
-      account,
+      isLoading,
+      error,
     },
     dispatch,
   ] = useReducer(reducer, initialState);
@@ -140,22 +187,21 @@ function FoodProvider({ children }) {
       async function getFoodBySearch() {
         try {
           dispatch({ type: "loading/results" });
-          const data = await AJAX(
-            `${API_URL}?search=${searchQuery}&key=${API_KEY}`
-          );
+          const data = await AJAX(`${API_URL}?search=${searchQuery}`);
 
           return data.data.recipes;
         } catch (error) {
-          throw new Error(error);
+          setError(dispatch, error.message);
         }
       }
       if (searchQuery)
-        getFoodBySearch().then((foodData) =>
+        getFoodBySearch().then((foodData) => {
+          console.log(foodData);
           dispatch({
             type: "searchResults/set",
             payload: foodData,
-          })
-        );
+          });
+        });
     },
     [searchQuery]
   );
@@ -165,10 +211,10 @@ function FoodProvider({ children }) {
       async function getFoodById(id) {
         try {
           dispatch({ type: "loading/recipe" });
-          const data = await AJAX(`${API_URL}/${id}?key=${API_KEY}`);
+          const data = await AJAX(`${API_URL}/${id}`);
           return data;
         } catch (error) {
-          throw new Error(error);
+          setError(dispatch, error.message);
         }
       }
 
@@ -183,16 +229,18 @@ function FoodProvider({ children }) {
   return (
     <FoodContext.Provider
       value={{
+        account,
         searchQuery,
         searchResults,
-        recipeInfo,
-        userRecipes,
-        bookmarks,
-        dispatch,
-        addRecipeWindow,
+        page,
         selectedRecipeId,
+        recipeInfo,
+        bookmarks,
+        userRecipes,
+        addRecipeWindow,
         isLoading,
-        account,
+        error,
+        dispatch,
       }}
     >
       {children}

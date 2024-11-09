@@ -41,7 +41,7 @@ function Bookmarks() {
                     <FontAwesomeIcon
                       icon={faUserCircle}
                       size="lg"
-                      className="recipe__info-icon"
+                      className="recipe__info--icon"
                       style={{ color: mainColor }}
                     />
                   </div>
@@ -58,7 +58,7 @@ function Bookmarks() {
                 style={{ color: mainColor }}
               />
             </div>
-            <p>no bookmarks yet, Find a nice recipe and bookmark it :)</p>
+            <p>No bookmarks yet, Find a nice recipe and bookmark it :)</p>
           </div>
         )}
       </ul>
